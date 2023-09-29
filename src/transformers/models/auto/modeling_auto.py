@@ -54,6 +54,7 @@ MODEL_MAPPING_NAMES = OrderedDict(
         ("chinese_clip", "ChineseCLIPModel"),
         ("clap", "ClapModel"),
         ("clip", "CLIPModel"),
+        ("siglip", "SiglipModel"),
         ("clipseg", "CLIPSegModel"),
         ("code_llama", "LlamaModel"),
         ("codegen", "CodeGenModel"),
@@ -1056,6 +1057,7 @@ MODEL_FOR_ZERO_SHOT_IMAGE_CLASSIFICATION_MAPPING_NAMES = OrderedDict(
         ("blip", "BlipModel"),
         ("chinese_clip", "ChineseCLIPModel"),
         ("clip", "CLIPModel"),
+        ("siglip", "SiglipModel"),
         ("clipseg", "CLIPSegModel"),
     ]
 )
