@@ -115,12 +115,6 @@ else:
                 ),
             ),
             (
-                "siglip",
-                (
-                    "CLIPTokenizer",
-                    "CLIPTokenizerFast" if is_tokenizers_available() else None,
-                ),
-            (
                 "clipseg",
                 (
                     "CLIPTokenizer",
@@ -334,6 +328,13 @@ else:
             ("roc_bert", ("RoCBertTokenizer", None)),
             ("roformer", ("RoFormerTokenizer", "RoFormerTokenizerFast" if is_tokenizers_available() else None)),
             ("rwkv", (None, "GPTNeoXTokenizerFast" if is_tokenizers_available() else None)),
+            (
+                "siglip",
+                (
+                    "CLIPTokenizer",
+                    "CLIPTokenizerFast" if is_tokenizers_available() else None,
+                ),
+            ),
             ("speech_to_text", ("Speech2TextTokenizer" if is_sentencepiece_available() else None, None)),
             ("speech_to_text_2", ("Speech2Text2Tokenizer", None)),
             ("speecht5", ("SpeechT5Tokenizer" if is_sentencepiece_available() else None, None)),
