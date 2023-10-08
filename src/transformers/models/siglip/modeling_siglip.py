@@ -194,14 +194,8 @@ class SiglipVisionEmbeddings(nn.Module):
         self.register_buffer("position_ids", torch.arange(self.num_positions).expand((1, -1)), persistent=False)
 
     def forward(self, pixel_values: torch.FloatTensor) -> torch.Tensor:
-        print("First values of pixel values:", pixel_values[0, 0, :3, :3])
-
         patch_embeds = self.patch_embedding(pixel_values)  # shape = [*, width, grid, grid]
         embeddings = patch_embeds.flatten(2).transpose(1, 2)
-
-        print("Shape of embeddings: ", embeddings.shape)
-        print("First values of patch embeddings:", embeddings[0, :3, :3])
-
         embeddings = embeddings + self.position_embedding(self.position_ids)
         return embeddings
 
@@ -721,13 +715,9 @@ class SiglipTextTransformer(nn.Module):
         last_hidden_state = encoder_outputs[0]
         last_hidden_state = self.final_layer_norm(last_hidden_state)
 
-        print("Final text hidden states:", last_hidden_state[0, :3, :3])
-
         # Assuming "sticky" EOS tokenization, last token is always EOS.
         pooled_output = last_hidden_state[:, -1, :]
         pooled_output = self.head(pooled_output)
-
-        print("First values of text pooled output:", pooled_output[0, :3])
 
         if not return_dict:
             return (last_hidden_state, pooled_output) + encoder_outputs[1:]
@@ -843,12 +833,9 @@ class SiglipVisionTransformer(nn.Module):
         last_hidden_state = encoder_outputs[0]
         last_hidden_state = self.post_layernorm(last_hidden_state)
 
-        print("First values post layernorm:", last_hidden_state[0, :3, :3])
 
         pooled_output = self.head(last_hidden_state)
 
-        print("Shape of pooled vision output:", pooled_output.shape)
-        print("First values of pooled vision output:", pooled_output[0, :3])
 
         if not return_dict:
             return (last_hidden_state, pooled_output) + encoder_outputs[1:]
@@ -876,10 +863,6 @@ class SiglipMultiheadAttentionPoolingHead(nn.Module):
         batch_size = hidden_state.shape[0]
         probe = self.probe.repeat(batch_size, 1, 1)
 
-        print("Shape of probe:", probe.shape)
-        print("First values of probe:", probe[0, :3, :3])
-        print("Shape of hidden state:", hidden_state.shape)
-        print("First values of hidden state:", hidden_state[0, :3, :3])
 
         hidden_state = self.attention(probe, hidden_state, hidden_state)[0]
 

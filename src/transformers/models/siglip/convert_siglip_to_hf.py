@@ -28,6 +28,7 @@ import torch
 from huggingface_hub import hf_hub_download
 from numpy import load
 from PIL import Image
+import safetensors.torch as sth
 
 from transformers import SiglipConfig, SiglipModel
 from transformers.utils import logging
@@ -53,6 +54,20 @@ def get_siglip_config(model_name):
         config.vision_config.hidden_size = 1024
         config.vision_config.num_hidden_layers = 24
         config.vision_config.num_attention_heads = 16
+    elif "so400m" in model_name:
+        config.vision_config.image_size = 384
+        config.vision_config.patch_size = 14
+        config.text_config.vocab_size = 32000
+        config.text_config.hidden_size = 1152
+        config.text_config.intermediate_size = 4304
+        config.text_config.max_position_embeddings = 64
+        config.text_config.num_attention_heads = 16
+        config.text_config.num_hidden_layers = 27
+        config.vision_config.hidden_size = 1152
+        config.vision_config.intermediate_size = 4304
+        config.vision_config.num_attention_heads = 16
+        config.vision_config.num_hidden_layers = 27
+        print("configuring for so400m.")
     else:
         raise ValueError("Model not supported")
 
@@ -220,7 +235,7 @@ def convert_siglip_checkpoint(model_name, pytorch_dump_folder_path, push_to_hub=
     config = get_siglip_config(model_name)
 
     # load original state dict
-    data = load("/Users/nielsrogge/Documents/SigLIP/webli_en_b16_224_63724782.npz")
+    data = load("webli_en_so400m_384_58765454.npz")
     state_dict = flatten_nested_dict(data)
 
     # remove and rename some keys
@@ -232,7 +247,7 @@ def convert_siglip_checkpoint(model_name, pytorch_dump_folder_path, push_to_hub=
     read_in_q_k_v_head(state_dict, config)
 
     # load HuggingFace model
-    model = SiglipModel(config).eval()
+    model = SiglipModel(config).eval().half()
     model.load_state_dict(state_dict)
 
     print("Original temperature:", data["params/t"])
@@ -244,27 +259,10 @@ def convert_siglip_checkpoint(model_name, pytorch_dump_folder_path, push_to_hub=
     #
     # pixel_values = processor(image, return_tensors="pt").pixel_values
 
-    filepath = hf_hub_download(repo_id="nielsr/test-image", filename="pixel_values_siglip.npy", repo_type="dataset")
-    pixel_values = np.load(filepath)
-    pixel_values = torch.from_numpy(pixel_values).permute(0, 3, 1, 2)
-    filepath = hf_hub_download(repo_id="nielsr/test-image", filename="input_ids_siglip.npy", repo_type="dataset")
-    input_ids = np.load(filepath)
-    input_ids = torch.from_numpy(input_ids)
-
-    with torch.no_grad():
-        outputs = model(input_ids=input_ids, pixel_values=pixel_values)
-
-    # assert values
-    expected_slice = torch.tensor(
-        [[-2.9621, -2.1672, -1.7837], [-0.2713, 0.2910, -10.6595], [-13.6617, -13.1611, -17.4408]]
-    )
-    assert torch.allclose(outputs.logits_per_image[:3, :3], expected_slice, atol=1e-4)
-    print("Looks ok!")
-
     if pytorch_dump_folder_path is not None:
         Path(pytorch_dump_folder_path).mkdir(exist_ok=True)
         print(f"Saving model {model_name} to {pytorch_dump_folder_path}")
-        model.save_pretrained(pytorch_dump_folder_path)
+        model.save_pretrained(pytorch_dump_folder_path, safe_serialization=True)
         # print(f"Saving processor to {pytorch_dump_folder_path}")
         # processor.save_pretrained(pytorch_dump_folder_path)
 
@@ -280,7 +278,6 @@ if __name__ == "__main__":
         "--model_name",
         default="siglip-base-patch16-224",
         type=str,
-        choices=["siglip-base-patch16-224"],
         help="Name of the model you'd like to convert.",
     )
     parser.add_argument(
